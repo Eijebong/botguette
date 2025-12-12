@@ -46,6 +46,7 @@ class ArchipelagoBot(discord.Client):
         self.allowed_channels = set(int(c.strip()) for c in allowed_channels_str.split(",") if c.strip())
 
         self.lobby_client = LobbyClient(api_key)
+        self.rate_limit_hours = int(os.getenv("RATE_LIMIT_HOURS", "1"))
         self.sync_role = os.environ["SYNC_ROLE"]
         self.async_role = os.environ["ASYNC_ROLE"]
         self._register_commands()
@@ -83,6 +84,16 @@ class ArchipelagoBot(discord.Client):
             logger.warning(f"Banned user {user_id} tried /archipelago")
             await interaction.response.send_message("You are not allowed to use this command.", ephemeral=True)
             return
+
+        if self.rate_limit_hours > 0:
+            cooldown_seconds = await self.database.get_user_cooldown_seconds(user_id, self.rate_limit_hours)
+            if cooldown_seconds > 0:
+                cooldown_end = int((datetime.now(timezone.utc) + timedelta(seconds=cooldown_seconds)).timestamp())
+                await interaction.response.send_message(
+                    f"You can announce again <t:{cooldown_end}:R>.",
+                    ephemeral=True
+                )
+                return
 
         if isinstance(interaction.channel, discord.Thread):
             await interaction.response.send_message(

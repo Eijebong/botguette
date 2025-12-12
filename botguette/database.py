@@ -1,5 +1,6 @@
 import aiosqlite
 import logging
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -103,3 +104,20 @@ class Database:
             ) as cursor:
                 result = await cursor.fetchone()
                 return result if result else None
+
+    async def get_user_cooldown_seconds(self, user_id: int, cooldown_hours: int = 1) -> int:
+        async with aiosqlite.connect(self.db_path) as db:
+            async with db.execute(
+                """SELECT MAX(announced_at) FROM announced_rooms
+                   WHERE announced_by = ?
+                   AND announced_at > datetime('now', ?)""",
+                (user_id, f"-{cooldown_hours} hours")
+            ) as cursor:
+                result = await cursor.fetchone()
+                if result and result[0]:
+                    last_announcement = datetime.fromisoformat(result[0]).replace(tzinfo=timezone.utc)
+                    now = datetime.now(timezone.utc)
+                    cooldown_end = last_announcement + timedelta(hours=cooldown_hours)
+                    remaining = (cooldown_end - now).total_seconds()
+                    return max(0, int(remaining))
+                return 0

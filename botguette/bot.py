@@ -214,7 +214,7 @@ class ArchipelagoBot(discord.Client):
         logger.info("------")
         self.cleanup_expired_pins.start()
 
-    @tasks.loop(minutes=1)
+    @tasks.loop(minutes=5)
     async def cleanup_expired_pins(self):
         logger.info("Checking for expired pins")
         announcements = await self.database.get_pinned_announcements()

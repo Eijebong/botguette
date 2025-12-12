@@ -1,0 +1,32 @@
+loader: taskgraph.loader.transform:loader
+
+transforms:
+  - taskgraph.transforms.run
+  - taskgraph.transforms.task
+  - eije_taskgraph.transforms.common:transforms
+
+kind-dependencies:
+  - docker-image
+
+task-defaults:
+  worker-type: "linux-small"
+  run-on-tasks-for: ["github-push"]
+  run-on-git-branches: ["main", "prod", "ci"]
+  run:
+      using: run-task
+      checkout:
+          botguette: {}
+      cwd: '{checkout}'
+
+tasks:
+  botguette:
+    description: Run pytest
+    worker:
+      docker-image: {in-tree: 'python'}
+      max-run-time: 1800
+    run:
+      use-caches: [checkout, uv]
+      command:
+        - sh
+        - -lxce
+        - uv run --locked pytest

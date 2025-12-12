@@ -11,9 +11,6 @@ from urllib.parse import urlparse
 from .database import Database
 from .lobby_client import LobbyClient
 
-SYNC_ROLE = os.environ["SYNC_ROLE"]
-ASYNC_ROLE = os.environ["ASYNC_ROLE"]
-
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
@@ -40,6 +37,8 @@ class ArchipelagoBot(discord.Client):
         self.allowed_channels = set(int(c.strip()) for c in allowed_channels_str.split(",") if c.strip())
 
         self.lobby_client = LobbyClient(api_key)
+        self.sync_role = os.environ["SYNC_ROLE"]
+        self.async_role = os.environ["ASYNC_ROLE"]
         self._register_commands()
 
     def _register_commands(self):
@@ -112,7 +111,7 @@ class ArchipelagoBot(discord.Client):
             logger.info(f"User {user_id} tried to announce already-announced room {room_id}")
             return
 
-        role_name = ASYNC_ROLE if is_async else SYNC_ROLE
+        role_name = self.async_role if is_async else self.sync_role
         role = discord.utils.get(interaction.guild.roles, name=role_name)
         if not role:
             await interaction.response.send_message(

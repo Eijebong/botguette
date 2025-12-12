@@ -82,7 +82,7 @@ class ArchipelagoBot(discord.Client):
 
         if await self.database.is_user_banned(user_id):
             logger.warning(f"Banned user {user_id} tried /archipelago")
-            await interaction.response.send_message("You are not allowed to use this command.", ephemeral=True)
+            await interaction.response.send_message("Your rights to use this command were revoked.", ephemeral=True)
             return
 
         if self.rate_limit_hours > 0:

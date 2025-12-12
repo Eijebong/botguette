@@ -1,8 +1,8 @@
-FROM ghcr.io/astral-sh/uv:python3.13-alpine
+FROM ghcr.io/astral-sh/uv:python3.13-bookworm
 
 RUN mkdir -p /builds && \
-    addgroup -g 1000 worker && \
-    adduser -D -h /builds/worker -s /bin/sh -G worker -u 1000 worker && \
+    groupadd -g 1000 -o worker && \
+    useradd -d /builds/worker -s /bin/bash -m worker -g 1000 -o -u 1000 && \
     mkdir -p /builds/worker/artifacts && \
     chown worker:worker /builds/worker /builds/worker/artifacts
 

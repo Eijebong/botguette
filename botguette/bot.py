@@ -65,13 +65,13 @@ class ArchipelagoBot(discord.Client):
 
         @self.tree.command(name="botguette-ban", description="Ban a user from using the bot")
         @app_commands.describe(user="The user to ban", reason="Reason for the ban")
-        @app_commands.default_permissions(manage_messages=True)
+        @app_commands.default_permissions(ban_members=True)
         async def botguette_ban(interaction: discord.Interaction, user: discord.User, reason: str = ""):
             await self._handle_ban_command(interaction, user, reason)
 
         @self.tree.command(name="botguette-unban", description="Unban a user from using the bot")
         @app_commands.describe(user="The user to unban")
-        @app_commands.default_permissions(manage_messages=True)
+        @app_commands.default_permissions(ban_members=True)
         async def botguette_unban(interaction: discord.Interaction, user: discord.User):
             await self._handle_unban_command(interaction, user)
 

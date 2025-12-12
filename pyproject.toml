@@ -1,0 +1,24 @@
+[project]
+name = "botguette"
+version = "0.1.0"
+description = "Discord bot to help organize Archipelago games"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "discord.py>=2.6.4",
+    "aiohttp>=3.13.2",
+    "aiosqlite>=0.21.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=7.4.3",
+    "pytest-asyncio>=0.21.1",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"

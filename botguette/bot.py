@@ -166,7 +166,8 @@ class ArchipelagoBot(discord.Client):
             thread = await original_message.create_thread(name=room_info.name[:100])
             thread_msg = await thread.send(f"**{safe_room_name}**\n{room_info.url}")
             await thread_msg.pin()
-            await self.database.mark_room_announced(room_id, guild_id, interaction.user.id, root_url, True)
+            await original_message.pin()
+            await self.database.mark_room_announced(room_id, guild_id, interaction.user.id, root_url, True, original_message.id, interaction.channel.id)
         else:
             await original_message.pin()
             await self.database.mark_room_announced(room_id, guild_id, interaction.user.id, root_url, False, original_message.id, interaction.channel.id)

@@ -17,14 +17,13 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-ANNOUNCEMENT_TEMPLATE = """{role_mention}
-
-{user_mention} is organizing an archipelago **{game_type}**
+ANNOUNCEMENT_TEMPLATE = """{user_mention} is organizing an Archipelago **{game_type}** on <t:{timestamp}:F>
 
 **{room_name}**
 {room_url}
 
-<t:{timestamp}:F>"""
+{role_mention}
+"""
 
 
 class ArchipelagoBot(discord.Client):

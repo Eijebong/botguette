@@ -17,6 +17,8 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+ANNOUNCEMENT_TEMPLATE = "{role_mention} {user_mention} is organizing an archipelago **{room_name}** at {room_url} on <t:{timestamp}:F>"
+
 
 class ArchipelagoBot(discord.Client):
     def __init__(self):
@@ -140,9 +142,12 @@ class ArchipelagoBot(discord.Client):
 
         safe_room_name = sanitize_room_name(room_info.name)
         timestamp = int(room_info.close_date.timestamp())
-        message = (
-            f"{role.mention} {interaction.user.mention} is organizing an archipelago "
-            f"**{safe_room_name}** at {room_info.url} on <t:{timestamp}:F>"
+        message = ANNOUNCEMENT_TEMPLATE.format(
+            role_mention=role.mention,
+            user_mention=interaction.user.mention,
+            room_name=safe_room_name,
+            room_url=room_info.url,
+            timestamp=timestamp
         )
 
         await interaction.edit_original_response(content=message)
@@ -226,9 +231,12 @@ class ArchipelagoBot(discord.Client):
                         role_mention = role.mention if role else "<unknown>"
                         user_mention = message.mentions[0].mention if message.mentions else "<unknown>"
                         safe_room_name = sanitize_room_name(room_info.name)
-                        new_content = (
-                            f"{role_mention} {user_mention} is organizing an archipelago "
-                            f"**{safe_room_name}** at {room_info.url} on <t:{timestamp}:F>"
+                        new_content = ANNOUNCEMENT_TEMPLATE.format(
+                            role_mention=role_mention,
+                            user_mention=user_mention,
+                            room_name=safe_room_name,
+                            room_url=room_info.url,
+                            timestamp=timestamp
                         )
                         await message.edit(content=new_content)
                         logger.info(f"Updated close date for room {room_id}")

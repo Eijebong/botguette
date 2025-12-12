@@ -1,0 +1,19 @@
+loader: taskgraph.loader.transform:loader
+
+transforms:
+  - taskgraph.transforms.run
+  - taskgraph.transforms.task
+  - eije_taskgraph.transforms.common:transforms
+
+kind-dependencies:
+  - publish-image-python
+
+tasks:
+  argocd:
+    description: ArgoCD webhook
+    worker-type: argocd-webhook
+    attributes:
+      very-soft-if-deps:
+        - publish-image-python-botguette
+    run:
+      using: argocd-webhook

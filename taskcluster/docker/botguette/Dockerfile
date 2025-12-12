@@ -6,9 +6,11 @@ ARG SRC=topsrcdir
 
 # %include pyproject.toml
 # %include uv.lock
+# %include README.md
 # %include botguette
 ADD ${SRC}/pyproject.toml \
     ${SRC}/uv.lock \
+    ${SRC}/README.md \
     ${SRC}/botguette \
     /app/
 

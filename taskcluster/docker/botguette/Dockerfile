@@ -8,11 +8,8 @@ ARG SRC=topsrcdir
 # %include uv.lock
 # %include README.md
 # %include botguette
-ADD ${SRC}/pyproject.toml \
-    ${SRC}/uv.lock \
-    ${SRC}/README.md \
-    ${SRC}/botguette \
-    /app/
+ADD ${SRC}/pyproject.toml ${SRC}/uv.lock ${SRC}/README.md /app/
+ADD ${SRC}/botguette /app/botguette
 
 RUN uv sync --locked
 

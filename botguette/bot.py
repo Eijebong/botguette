@@ -17,7 +17,14 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-ANNOUNCEMENT_TEMPLATE = "{role_mention} {user_mention} is organizing an archipelago **{room_name}** at {room_url} on <t:{timestamp}:F>"
+ANNOUNCEMENT_TEMPLATE = """{role_mention}
+
+{user_mention} is organizing an archipelago **{game_type}**
+
+**{room_name}**
+{room_url}
+
+<t:{timestamp}:F>"""
 
 
 class ArchipelagoBot(discord.Client):
@@ -142,9 +149,11 @@ class ArchipelagoBot(discord.Client):
 
         safe_room_name = sanitize_room_name(room_info.name)
         timestamp = int(room_info.close_date.timestamp())
+        game_type = "async" if is_async else "sync"
         message = ANNOUNCEMENT_TEMPLATE.format(
             role_mention=role.mention,
             user_mention=interaction.user.mention,
+            game_type=game_type,
             room_name=safe_room_name,
             room_url=room_info.url,
             timestamp=timestamp
@@ -231,9 +240,11 @@ class ArchipelagoBot(discord.Client):
                         role_mention = role.mention if role else "<unknown>"
                         user_mention = message.mentions[0].mention if message.mentions else "<unknown>"
                         safe_room_name = sanitize_room_name(room_info.name)
+                        game_type = "async" if is_async else "sync"
                         new_content = ANNOUNCEMENT_TEMPLATE.format(
                             role_mention=role_mention,
                             user_mention=user_mention,
+                            game_type=game_type,
                             room_name=safe_room_name,
                             room_url=room_info.url,
                             timestamp=timestamp

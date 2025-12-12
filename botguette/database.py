@@ -27,9 +27,15 @@ class Database:
                     message_id INTEGER,
                     channel_id INTEGER,
                     lobby_url TEXT,
+                    is_async INTEGER DEFAULT 0,
                     PRIMARY KEY (room_id, guild_id)
                 )
             """)
+            # Migration: add is_async column if it doesn't exist
+            async with db.execute("PRAGMA table_info(announced_rooms)") as cursor:
+                columns = [row[1] for row in await cursor.fetchall()]
+                if "is_async" not in columns:
+                    await db.execute("ALTER TABLE announced_rooms ADD COLUMN is_async INTEGER DEFAULT 0")
             await db.commit()
             logger.info("Database initialized")
 
@@ -65,19 +71,19 @@ class Database:
                 result = await cursor.fetchone()
                 return result is not None
 
-    async def mark_room_announced(self, room_id: str, guild_id: int, user_id: int, lobby_url: str, message_id: int = None, channel_id: int = None):
+    async def mark_room_announced(self, room_id: str, guild_id: int, user_id: int, lobby_url: str, is_async: bool, message_id: int = None, channel_id: int = None):
         async with aiosqlite.connect(self.db_path) as db:
             await db.execute(
-                "INSERT OR IGNORE INTO announced_rooms (room_id, guild_id, announced_by, lobby_url, message_id, channel_id) VALUES (?, ?, ?, ?, ?, ?)",
-                (room_id, guild_id, user_id, lobby_url, message_id, channel_id)
+                "INSERT OR IGNORE INTO announced_rooms (room_id, guild_id, announced_by, lobby_url, is_async, message_id, channel_id) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                (room_id, guild_id, user_id, lobby_url, int(is_async), message_id, channel_id)
             )
             await db.commit()
             logger.info(f"Room {room_id} marked as announced in guild {guild_id} by user {user_id}")
 
-    async def get_pinned_announcements(self) -> list[tuple[str, int, int, int, str]]:
+    async def get_pinned_announcements(self) -> list[tuple[str, int, int, int, str, bool]]:
         async with aiosqlite.connect(self.db_path) as db:
             async with db.execute(
-                "SELECT room_id, guild_id, message_id, channel_id, lobby_url FROM announced_rooms WHERE message_id IS NOT NULL"
+                "SELECT room_id, guild_id, message_id, channel_id, lobby_url, is_async FROM announced_rooms WHERE message_id IS NOT NULL"
             ) as cursor:
                 return await cursor.fetchall()
 

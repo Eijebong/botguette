@@ -152,10 +152,10 @@ class ArchipelagoBot(discord.Client):
             thread = await original_message.create_thread(name=room_info.name[:100])
             thread_msg = await thread.send(f"**{safe_room_name}**\n{room_info.url}")
             await thread_msg.pin()
-            await self.database.mark_room_announced(room_id, guild_id, interaction.user.id, root_url)
+            await self.database.mark_room_announced(room_id, guild_id, interaction.user.id, root_url, True)
         else:
             await original_message.pin()
-            await self.database.mark_room_announced(room_id, guild_id, interaction.user.id, root_url, original_message.id, interaction.channel.id)
+            await self.database.mark_room_announced(room_id, guild_id, interaction.user.id, root_url, False, original_message.id, interaction.channel.id)
 
         logger.info(f"Room {room_id} announced by {user_id}")
 
@@ -205,7 +205,7 @@ class ArchipelagoBot(discord.Client):
         logger.info("Checking for expired pins")
         announcements = await self.database.get_pinned_announcements()
 
-        for room_id, guild_id, message_id, channel_id, lobby_url in announcements:
+        for room_id, guild_id, message_id, channel_id, lobby_url, is_async in announcements:
             try:
                 channel = self.get_channel(channel_id)
                 if not channel:
@@ -221,7 +221,9 @@ class ArchipelagoBot(discord.Client):
                 else:
                     timestamp = int(room_info.close_date.timestamp())
                     if f"<t:{timestamp}:F>" not in message.content:
-                        role_mention = message.role_mentions[0].mention if message.role_mentions else "<unknown>"
+                        role_name = self.async_role if is_async else self.sync_role
+                        role = discord.utils.get(channel.guild.roles, name=role_name)
+                        role_mention = role.mention if role else "<unknown>"
                         user_mention = message.mentions[0].mention if message.mentions else "<unknown>"
                         safe_room_name = sanitize_room_name(room_info.name)
                         new_content = (

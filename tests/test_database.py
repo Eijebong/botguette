@@ -35,7 +35,7 @@ async def test_room_announcement_tracking(temp_db):
     lobby_url = "https://ap-lobby.bananium.fr"
 
     assert not await temp_db.is_room_announced(room_id, guild_id)
-    await temp_db.mark_room_announced(room_id, guild_id, user_id, lobby_url)
+    await temp_db.mark_room_announced(room_id, guild_id, user_id, lobby_url, False)
     assert await temp_db.is_room_announced(room_id, guild_id)
 
     info = await temp_db.get_room_announcement_info(room_id, guild_id)
@@ -52,11 +52,11 @@ async def test_room_announcement_per_guild(temp_db):
     user_id = 123456789
     lobby_url = "https://ap-lobby.bananium.fr"
 
-    await temp_db.mark_room_announced(room_id, guild1_id, user_id, lobby_url)
+    await temp_db.mark_room_announced(room_id, guild1_id, user_id, lobby_url, False)
     assert await temp_db.is_room_announced(room_id, guild1_id)
     assert not await temp_db.is_room_announced(room_id, guild2_id)
 
-    await temp_db.mark_room_announced(room_id, guild2_id, user_id, lobby_url)
+    await temp_db.mark_room_announced(room_id, guild2_id, user_id, lobby_url, True)
     assert await temp_db.is_room_announced(room_id, guild1_id)
     assert await temp_db.is_room_announced(room_id, guild2_id)
 
@@ -68,10 +68,10 @@ async def test_duplicate_announcement_prevention(temp_db):
     user2_id = 987654321
     lobby_url = "https://ap-lobby.bananium.fr"
 
-    await temp_db.mark_room_announced(room_id, guild_id, user1_id, lobby_url)
+    await temp_db.mark_room_announced(room_id, guild_id, user1_id, lobby_url, False)
     info = await temp_db.get_room_announcement_info(room_id, guild_id)
     assert info[0] == user1_id
 
-    await temp_db.mark_room_announced(room_id, guild_id, user2_id, lobby_url)
+    await temp_db.mark_room_announced(room_id, guild_id, user2_id, lobby_url, False)
     info = await temp_db.get_room_announcement_info(room_id, guild_id)
     assert info[0] == user1_id

@@ -29,14 +29,17 @@ class Database:
                     channel_id INTEGER,
                     lobby_url TEXT,
                     is_async INTEGER DEFAULT 0,
+                    thread_id INTEGER,
                     PRIMARY KEY (room_id, guild_id)
                 )
             """)
-            # Migration: add is_async column if it doesn't exist
+            # Migrations
             async with db.execute("PRAGMA table_info(announced_rooms)") as cursor:
                 columns = [row[1] for row in await cursor.fetchall()]
                 if "is_async" not in columns:
                     await db.execute("ALTER TABLE announced_rooms ADD COLUMN is_async INTEGER DEFAULT 0")
+                if "thread_id" not in columns:
+                    await db.execute("ALTER TABLE announced_rooms ADD COLUMN thread_id INTEGER")
             await db.commit()
             logger.info("Database initialized")
 
@@ -72,11 +75,11 @@ class Database:
                 result = await cursor.fetchone()
                 return result is not None
 
-    async def mark_room_announced(self, room_id: str, guild_id: int, user_id: int, lobby_url: str, is_async: bool, message_id: int = None, channel_id: int = None):
+    async def mark_room_announced(self, room_id: str, guild_id: int, user_id: int, lobby_url: str, is_async: bool, message_id: int = None, channel_id: int = None, thread_id: int = None):
         async with aiosqlite.connect(self.db_path) as db:
             await db.execute(
-                "INSERT OR IGNORE INTO announced_rooms (room_id, guild_id, announced_by, lobby_url, is_async, message_id, channel_id) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                (room_id, guild_id, user_id, lobby_url, int(is_async), message_id, channel_id)
+                "INSERT OR IGNORE INTO announced_rooms (room_id, guild_id, announced_by, lobby_url, is_async, message_id, channel_id, thread_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                (room_id, guild_id, user_id, lobby_url, int(is_async), message_id, channel_id, thread_id)
             )
             await db.commit()
             logger.info(f"Room {room_id} marked as announced in guild {guild_id} by user {user_id}")
@@ -108,7 +111,7 @@ class Database:
     async def get_thread_owner(self, thread_id: int, guild_id: int) -> int | None:
         async with aiosqlite.connect(self.db_path) as db:
             async with db.execute(
-                "SELECT announced_by FROM announced_rooms WHERE message_id = ? AND guild_id = ? AND is_async = 1",
+                "SELECT announced_by FROM announced_rooms WHERE thread_id = ? AND guild_id = ?",
                 (thread_id, guild_id)
             ) as cursor:
                 result = await cursor.fetchone()

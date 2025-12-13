@@ -105,6 +105,15 @@ class Database:
                 result = await cursor.fetchone()
                 return result if result else None
 
+    async def get_thread_owner(self, thread_id: int, guild_id: int) -> int | None:
+        async with aiosqlite.connect(self.db_path) as db:
+            async with db.execute(
+                "SELECT announced_by FROM announced_rooms WHERE message_id = ? AND guild_id = ? AND is_async = 1",
+                (thread_id, guild_id)
+            ) as cursor:
+                result = await cursor.fetchone()
+                return result[0] if result else None
+
     async def get_user_cooldown_seconds(self, user_id: int, cooldown_hours: int = 1) -> int:
         async with aiosqlite.connect(self.db_path) as db:
             async with db.execute(

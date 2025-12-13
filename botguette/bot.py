@@ -75,6 +75,16 @@ class ArchipelagoBot(discord.Client):
         async def botguette_unban(interaction: discord.Interaction, user: discord.User):
             await self._handle_unban_command(interaction, user)
 
+        @self.tree.command(name="pin", description="Pin a message in your async thread")
+        @app_commands.describe(message_id="The ID of the message to pin")
+        async def pin(interaction: discord.Interaction, message_id: str):
+            await self._handle_pin_command(interaction, message_id, pin=True)
+
+        @self.tree.command(name="unpin", description="Unpin a message in your async thread")
+        @app_commands.describe(message_id="The ID of the message to unpin")
+        async def unpin(interaction: discord.Interaction, message_id: str):
+            await self._handle_pin_command(interaction, message_id, pin=False)
+
     async def _handle_archipelago_command(self, interaction: discord.Interaction, room_url: str, game_type: str):
         user_id = interaction.user.id
         is_async = game_type == "async"
@@ -204,6 +214,55 @@ class ArchipelagoBot(discord.Client):
 
         await interaction.followup.send(f"Unbanned {user.mention}", ephemeral=True)
         logger.info(f"Unbanned {user_id}")
+
+    async def _handle_pin_command(self, interaction: discord.Interaction, message_id: str, pin: bool):
+        action = "pin" if pin else "unpin"
+
+        if not isinstance(interaction.channel, discord.Thread):
+            await interaction.response.send_message(
+                "This command can only be used in an async thread.",
+                ephemeral=True
+            )
+            return
+
+        thread = interaction.channel
+        owner_id = await self.database.get_thread_owner(thread.id, interaction.guild.id)
+
+        if interaction.user.id != owner_id:
+            await interaction.response.send_message(
+                "Only the thread owner can pin/unpin messages.",
+                ephemeral=True
+            )
+            return
+
+        try:
+            msg_id = int(message_id)
+        except ValueError:
+            await interaction.response.send_message(
+                "Invalid message ID.",
+                ephemeral=True
+            )
+            return
+
+        try:
+            message = await thread.fetch_message(msg_id)
+        except discord.NotFound:
+            await interaction.response.send_message(
+                "Message not found in this thread.",
+                ephemeral=True
+            )
+            return
+
+        try:
+            if pin:
+                await message.pin()
+            else:
+                await message.unpin()
+            await interaction.response.send_message(f"Message {action}ned.", ephemeral=True)
+            logger.info(f"User {interaction.user.id} {action}ned message {msg_id} in thread {thread.id}")
+        except Exception as e:
+            logger.error(f"Failed to {action} message {msg_id} in thread {thread.id}: {e}")
+            await interaction.response.send_message(f"Failed to {action} message.", ephemeral=True)
 
     async def setup_hook(self):
         await self.database.initialize()

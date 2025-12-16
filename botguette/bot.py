@@ -187,7 +187,7 @@ class ArchipelagoBot(discord.Client):
             thread_msg = await thread.send(f"**{safe_room_name}**\n{room_info.url}")
             await thread_msg.pin()
             await original_message.pin()
-            await self.database.mark_room_announced(room_id, guild_id, interaction.user.id, root_url, True, original_message.id, interaction.channel.id, thread.id)
+            await self.database.mark_room_announced(room_id, guild_id, interaction.user.id, root_url, True, original_message.id, interaction.channel.id, thread.id, thread_msg.id)
         else:
             await original_message.pin()
             await self.database.mark_room_announced(room_id, guild_id, interaction.user.id, root_url, False, original_message.id, interaction.channel.id)
@@ -289,7 +289,7 @@ class ArchipelagoBot(discord.Client):
         logger.info("Checking for expired pins")
         announcements = await self.database.get_pinned_announcements()
 
-        for room_id, guild_id, message_id, channel_id, lobby_url, is_async in announcements:
+        for room_id, guild_id, message_id, channel_id, lobby_url, is_async, thread_id, thread_message_id in announcements:
             try:
                 channel = self.get_channel(channel_id)
                 if not channel:
@@ -303,13 +303,15 @@ class ArchipelagoBot(discord.Client):
                     await self.database.clear_message_id(room_id, guild_id)
                     logger.info(f"Unpinned expired room {room_id}")
                 else:
+                    safe_room_name = sanitize_room_name(room_info.name)
                     timestamp = int(room_info.close_date.timestamp())
-                    if f"<t:{timestamp}:F>" not in message.content:
+                    needs_update = f"<t:{timestamp}:F>" not in message.content or f"**{safe_room_name}**" not in message.content
+
+                    if needs_update:
                         role_name = self.async_role if is_async else self.sync_role
                         role = discord.utils.get(channel.guild.roles, name=role_name)
                         role_mention = role.mention if role else "<unknown>"
                         user_mention = message.mentions[0].mention if message.mentions else "<unknown>"
-                        safe_room_name = sanitize_room_name(room_info.name)
                         game_type = "async" if is_async else "sync"
                         new_content = ANNOUNCEMENT_TEMPLATE.format(
                             role_mention=role_mention,
@@ -320,7 +322,16 @@ class ArchipelagoBot(discord.Client):
                             timestamp=timestamp
                         )
                         await message.edit(content=new_content)
-                        logger.info(f"Updated close date for room {room_id}")
+                        logger.info(f"Updated announcement for room {room_id}")
+
+                        if thread_id and thread_message_id:
+                            thread = self.get_channel(thread_id)
+                            if not thread:
+                                thread = await self.fetch_channel(thread_id)
+                            await thread.edit(name=room_info.name[:100])
+                            thread_msg = await thread.fetch_message(thread_message_id)
+                            await thread_msg.edit(content=f"**{safe_room_name}**\n{room_info.url}")
+                            logger.info(f"Updated thread for room {room_id}")
             except discord.NotFound:
                 await self.database.clear_message_id(room_id, guild_id)
                 logger.info(f"Message deleted for room {room_id}, cleared from DB")

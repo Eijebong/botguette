@@ -23,6 +23,7 @@ Bot permissions:
 - Create Public Threads
 - Send Messages in Threads
 - Manage Messages (for pinning)
+- Ping everyone
 
 ## Commands
 

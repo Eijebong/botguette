@@ -179,8 +179,8 @@ class ArchipelagoBot(discord.Client):
             timestamp=timestamp
         )
 
-        await interaction.edit_original_response(content=message, allowed_mentions=discord.AllowedMentions(roles=[role], users=[interaction.user]))
-        original_message = await interaction.original_response()
+        await interaction.delete_original_response()
+        original_message = await interaction.channel.send(content=message, allowed_mentions=discord.AllowedMentions(roles=[role], users=[interaction.user]))
 
         if is_async:
             thread = await original_message.create_thread(name=room_info.name[:100])

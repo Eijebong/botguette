@@ -179,7 +179,7 @@ class ArchipelagoBot(discord.Client):
             timestamp=timestamp
         )
 
-        await interaction.edit_original_response(content=message)
+        await interaction.edit_original_response(content=message, allowed_mentions=discord.AllowedMentions(roles=True))
         original_message = await interaction.original_response()
 
         if is_async:
